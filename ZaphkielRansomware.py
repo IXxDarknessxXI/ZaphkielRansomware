@@ -2,7 +2,6 @@ import os
 import getpass
 from cryptography.fernet import Fernet, InvalidToken  
 import requests
-from pynput.keyboard import Key, Listener
 
 url = "https://api.ipify.org"
 usuario = getpass.getuser()
