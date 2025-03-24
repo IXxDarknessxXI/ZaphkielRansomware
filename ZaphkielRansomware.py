@@ -2,7 +2,6 @@ import os
 import getpass
 from cryptography.fernet import Fernet, InvalidToken
 import requests
-from pynput.keyboard import Key, Listener
 
 rojo = "\033[91m"
 url = "https://api.ipify.org"
